@@ -1,7 +1,9 @@
 ﻿  LinkLayer.cpp
 c:\users\will\desktop\ift585tp1\computer\driver\layer\linklayer.cpp(319): warning C4267: '=': conversion from 'size_t' to 'NumberSequence', possible loss of data
 c:\users\will\desktop\ift585tp1\computer\driver\layer\linklayer.cpp(320): warning C4267: '=': conversion from 'size_t' to 'NumberSequence', possible loss of data
-c:\users\will\desktop\ift585tp1\computer\driver\layer\linklayer.cpp(346): warning C4267: '=': conversion from 'size_t' to 'NumberSequence', possible loss of data
-c:\users\will\desktop\ift585tp1\computer\driver\layer\linklayer.cpp(366): warning C4267: '=': conversion from 'size_t' to 'NumberSequence', possible loss of data
-c:\users\will\desktop\ift585tp1\computer\driver\layer\linklayer.cpp(367): warning C4267: '=': conversion from 'size_t' to 'NumberSequence', possible loss of data
+c:\users\will\desktop\ift585tp1\computer\driver\layer\linklayer.cpp(332): warning C4267: '=': conversion from 'size_t' to 'NumberSequence', possible loss of data
+c:\users\will\desktop\ift585tp1\computer\driver\layer\linklayer.cpp(333): warning C4267: '=': conversion from 'size_t' to 'NumberSequence', possible loss of data
+c:\users\will\desktop\ift585tp1\computer\driver\layer\linklayer.cpp(362): warning C4267: '=': conversion from 'size_t' to 'NumberSequence', possible loss of data
+c:\users\will\desktop\ift585tp1\computer\driver\layer\linklayer.cpp(478): warning C4267: '=': conversion from 'size_t' to 'NumberSequence', possible loss of data
+c:\users\will\desktop\ift585tp1\computer\driver\layer\linklayer.cpp(479): warning C4267: '=': conversion from 'size_t' to 'NumberSequence', possible loss of data
   Simulateur.vcxproj -> C:\Users\will\Desktop\ift585tp1\Output\Simulateur.exe

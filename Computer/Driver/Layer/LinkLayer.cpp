@@ -320,6 +320,19 @@ void LinkLayer::senderCallback()
 			frame.Ack = next_sending_event.Number;
 			frame.Size = FrameType::ACK;
 
+			sendFrame(frame);
+		}
+		
+
+		if (next_sending_event.Type == EventType::SEND_NAK_REQUEST) {
+
+			Frame frame;
+			frame.Destination = next_sending_event.Address;
+			frame.Source = m_address;
+			frame.NumberSequence = next_sending_event.Number;
+			frame.Ack = next_sending_event.Number;
+			frame.Size = FrameType::NAK;
+
 			if (!sendFrame(frame))
 			{
 				return;
@@ -332,32 +345,55 @@ void LinkLayer::senderCallback()
 
 			Frame* temp_buf = new Frame[NR_BUFS];
 			int newInt = 0;
+			int end = NR_BUFS - 1;
 			for (int i = 0; i < NR_BUFS; i++) {
 
 				if (out_buf[i].NumberSequence > next_sending_event.Number) {
-					temp_buf[newInt] = out_buf[i];
+					out_buf[newInt] = out_buf[i];
 					newInt++;
 				}
+				else {
+					out_buf[end] = out_buf[i];					
+					end--;
+				}
 			}
-
-			out_buf = temp_buf;
-
-			nbuffered--;
+			nbuffered = newInt;
+			
 			ack_expected = next_sending_event.Number + 1;
+			notifyStopAckTimers(next_sending_event.Address);
 			
 		}
 
 		if (next_sending_event.Type == EventType::SEND_TIMEOUT) {
-			log << "SENDER: DATA TIMEOUT " << std::endl;
+			log << "SENDER: DATA TIMEOUT: " << next_sending_event.Number  << " expected: " << ack_expected <<  std::endl;
 
-			for (int i = 0; i < NR_BUFS; i++) { 
-				if (out_buf[i].NumberSequence == next_sending_event.Number) {
+			
+				for (int i = 0; i < NR_BUFS; i++) {
+					if (out_buf[i].NumberSequence == next_sending_event.Number) {
+						log << "RESENDING: " << next_sending_event.Number << std::endl;
+					
+						if (sendFrame(out_buf[i]))
+						{
+							return;
+						}
+					}
+				}
+			
+		}
+
+		if (next_sending_event.Type == EventType::NAK_RECEIVED) {
+			log << "SENDER: NAK RECEIVED: " << next_sending_event.Number << std::endl;
+			
+			for (int i = 0; i < NR_BUFS; i++) {
+				if (out_buf[i].NumberSequence == ack_expected) {
+					log << "Sending expected ack: " << next_sending_event.Number << std::endl;
 					sendFrame(out_buf[i]);
 				}
 			}
+			
 		}
 
-		if (next_sending_event.Type == EventType::ACK_TIMEOUT) {
+		/*if (next_sending_event.Type == EventType::ACK_TIMEOUT) {
 			log << "SENDER: ACK TIMEOUT " << next_sending_event.Address << std::endl;
 
 			Frame frame;
@@ -366,7 +402,7 @@ void LinkLayer::senderCallback()
 			frame.NumberSequence = next_sending_event.Number;
 			frame.Ack = next_sending_event.Number;
 			frame.Size = FrameType::ACK;
-		}
+		}*/
 
 		// S'il n'y a pas d'event
 		if (next_sending_event.Type == EventType::INVALID) {
@@ -377,11 +413,8 @@ void LinkLayer::senderCallback()
 				// On envoie une trame
 				if (m_driver->getNetworkLayer().dataReady())
 				{
-					log << "Adding to window" << std::endl;
-					log << "buf_index:" << nbuffered << std::endl;
 					log << "first_frame_number:" << out_buf[0].NumberSequence << std::endl;
 					log << "last_frame_number:" << next_frame_to_send << std::endl;
-
 
 					Packet packet = m_driver->getNetworkLayer().getNextData();
 										
@@ -419,6 +452,8 @@ void LinkLayer::receiverCallback()
 	bool* arrived = new bool[NR_BUFS];
 	bool no_nak = true;
 
+	std::vector<int> ack_timers;
+
 	for (int i = 0; i < NR_BUFS; i++) { arrived[i] = false; }
 
     // Passtrough
@@ -427,6 +462,26 @@ void LinkLayer::receiverCallback()
 		Logger log(std::cout);
 		// Check if there is an event
 		Event next_receiving_event = getNextSendingEvent();
+
+		if (next_receiving_event.Type == EventType::STOP_ACK_TIMER_REQUEST) {
+			for (int i = 0; i < ack_timers.size(); i++) {
+				stopAckTimer(ack_timers[i]);
+			}
+		}
+
+		if (next_receiving_event.Type == EventType::ACK_TIMEOUT) {
+			log << "SENDER: ACK TIMEOUT " << next_receiving_event.Address << std::endl;
+
+			Frame frame;
+			frame.Destination = next_receiving_event.Address;
+			frame.Source = m_address;
+			frame.NumberSequence = next_receiving_event.Number;
+			frame.Ack = next_receiving_event.Number;
+			frame.Size = FrameType::ACK;
+
+			notifyACK(frame, frame.NumberSequence);
+			startAckTimer(next_receiving_event.TimerID, frame.NumberSequence);
+		}
 
 		// S'il n'y a pas d'event
 		if (next_receiving_event.Type == EventType::INVALID) {
@@ -437,12 +492,13 @@ void LinkLayer::receiverCallback()
 				if (frame.Size == FrameType::NAK)
 				{
 					log << "RECEIVER: " << frame.Destination << " : received a NAK  from " << frame.Source << " : " << frame.Ack << std::endl;
+					//notifyNAK(frame);
 				}
 				else if (frame.Size == FrameType::ACK)
 				{
 					log << "RECEIVER: " << frame.Destination << " : received a ACK  from " << frame.Source << " : " << frame.Ack << std::endl;
-					notifyACK(frame, frame.NumberSequence);
-					startAckTimer(-1, frame.Ack);
+					notifyACK(frame, frame.Ack);
+					//ack_timers.push_back(startAckTimer(-1, frame.NumberSequence));
 				}
 				else
 				{
@@ -450,10 +506,10 @@ void LinkLayer::receiverCallback()
 					if ((frame.NumberSequence != frame_expected) && no_nak) {
 
 						log << "unexpected frame receive: " << frame.NumberSequence << " sending NAK" << std::endl;
-						sendNak(frame.Source, frame.NumberSequence);
+						//sendNak(frame.Source, frame.NumberSequence);
 					}
 
-					if (between(frame_expected, frame.NumberSequence, too_far) && (arrived[frame.NumberSequence % NR_BUFS] == false)) {
+					if (between(frame.NumberSequence, frame_expected, too_far) && (arrived[frame.NumberSequence % NR_BUFS] == false)) {
 
 						arrived[frame.NumberSequence % NR_BUFS] = true;
 						in_buf[frame.NumberSequence % NR_BUFS] = frame.NumberSequence;
@@ -466,7 +522,7 @@ void LinkLayer::receiverCallback()
 							frame_expected++;
 							too_far++;
 							sendAck(frame.Source, frame.NumberSequence);
-							startTimeoutTimer(frame.NumberSequence);
+							//startTimeoutTimer(frame.NumberSequence);
 						}
 					}
 
