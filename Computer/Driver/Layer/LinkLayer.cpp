@@ -110,11 +110,13 @@ bool LinkLayer::sendFrame(const Frame& frame)
             {
                 log << "SENDER  :" << frame.Source << " : Sending ACK  to " << frame.Destination << " : " << frame.Ack << std::endl;
 				m_sendingQueue.push(frame);
+				startAckTimer(-1, frame.Ack);
             }
             else
             {
                 log << "SENDER  :" << frame.Source << " : Sending DATA to " << frame.Destination << " : " << frame.NumberSequence << std::endl;
 				m_sendingQueue.push(frame);
+				startTimeoutTimer(frame.NumberSequence);
             }
             
             return true;
@@ -300,7 +302,7 @@ void LinkLayer::senderCallback()
 	int NR_BUFS = (m_maximumSequence + 1) / 2;
 	NumberSequence ack_expected = 0;
 	NumberSequence next_frame_to_send = 0;
-	Packet* out_buf = new Packet[NR_BUFS];
+	Frame* out_buf = new Frame[NR_BUFS];
 	NumberSequence nbuffered = 0;
 	bool no_nak = true;
 
@@ -318,16 +320,43 @@ void LinkLayer::senderCallback()
 			frame.Ack = next_sending_event.Number;
 			frame.Size = FrameType::ACK;
 
-			if (!sendFrame(frame))
-			{
-				return;
-			}
+			sendFrame(frame);
+			
 		}
 
-		/*if (next_sending_event.Type == EventType::ACK_RECEIVED) {
+		if (next_sending_event.Type == EventType::ACK_RECEIVED) {
 
-			out_buf[0].
-		}*/
+			log << "ACK RECEIVED: " << next_sending_event.Number << std::endl;
+			
+			while (between(next_sending_event.Number, ack_expected, next_frame_to_send)) {
+				nbuffered--;
+				stopAckTimer(next_sending_event.TimerID);
+				ack_expected++;
+				log << "ARGG " << ack_expected << std::endl;
+			}
+			
+		}
+
+		if (next_sending_event.Type == EventType::SEND_TIMEOUT) {
+
+			log << "SEND TIMEOUT: " << next_sending_event.Number << std::endl;
+			
+			int n = 0;
+
+			log << "SENDING AGAIN: " << out_buf[n].NumberSequence << std::endl;
+
+			while(n < NR_BUFS){
+				
+				if (next_sending_event.Number == out_buf[n].NumberSequence) {
+
+					sendFrame(out_buf[n]);
+				}
+				n++;
+			}
+
+		}
+
+		
 
 		// S'il n'y a pas d'event
 		if (next_sending_event.Type == EventType::INVALID) {
@@ -340,7 +369,13 @@ void LinkLayer::senderCallback()
 				{
 
 					Packet packet = m_driver->getNetworkLayer().getNextData();
-					out_buf[nbuffered] = packet;
+					
+
+					for (int i = 0; i < NR_BUFS - 1; i++) {
+						out_buf[i] = out_buf[i + 1];
+					}
+
+					
 					
 					Frame frame;
 					frame.Destination = arp(packet);
@@ -348,6 +383,8 @@ void LinkLayer::senderCallback()
 					frame.NumberSequence = next_frame_to_send;
 					frame.Data = Buffering::pack<Packet>(packet);
 					frame.Size = (uint16_t)frame.Data.size();
+
+					out_buf[NR_BUFS - 1] = frame;
 
 					nbuffered++;
 					next_frame_to_send++;
@@ -383,6 +420,18 @@ void LinkLayer::receiverCallback()
 		// Check if there is an event
 		Event next_receiving_event = getNextSendingEvent();
 
+		if (next_receiving_event.Type == EventType::SEND_TIMEOUT) {
+			log << "RECEIVER TIMEOUT: " << next_receiving_event.Number << std::endl;
+			Frame frame;
+			frame.Destination = next_receiving_event.Address;
+			frame.Source = m_address;
+			frame.NumberSequence = next_receiving_event.Number;
+			frame.Ack = next_receiving_event.Number;
+			frame.Size = FrameType::ACK;
+			notifyACK(frame, frame.Ack);
+
+		}
+
 		// S'il n'y a pas d'event
 		if (next_receiving_event.Type == EventType::INVALID) {
 			if (m_receivingQueue.canRead<Frame>())
@@ -396,7 +445,8 @@ void LinkLayer::receiverCallback()
 				else if (frame.Size == FrameType::ACK)
 				{
 					log << "RECEIVER: " << frame.Destination << " : received a ACK  from " << frame.Source << " : " << frame.Ack << std::endl;
-					notifyACK(frame, frame.NumberSequence);
+					notifyACK(frame, frame.Ack);
+					startAckTimer(-1, frame.Ack);
 				}
 				else
 				{
@@ -407,7 +457,7 @@ void LinkLayer::receiverCallback()
 						sendNak(frame.Source, frame.NumberSequence);
 					}
 
-					if (between(frame_expected, frame.NumberSequence, too_far) && (arrived[frame.NumberSequence % NR_BUFS] == false)) {
+					if (between( frame.NumberSequence, frame_expected, too_far) && (arrived[frame.NumberSequence % NR_BUFS] == false)) {
 
 						arrived[frame.NumberSequence % NR_BUFS] = true;
 						in_buf[frame.NumberSequence % NR_BUFS] = frame.NumberSequence;
