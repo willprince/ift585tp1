@@ -2,7 +2,6 @@
 
 #include <fstream>
 #include <stdexcept>
-#include <iostream>
 
 const std::string Configuration::NETWORK_LAYER_RECEIVING_BUFFER_SIZE = "NetworkLayerReceivingBufferSize";
 const std::string Configuration::NETWORK_LAYER_SENDING_BUFFER_SIZE = "NetworkLayerSendingBufferSize";
@@ -13,9 +12,9 @@ const std::string Configuration::LINK_LAYER_SENDING_BUFFER_SIZE = "LinkLayerSend
 const std::string Configuration::LINK_LAYER_MAXIMUM_BUFFERED_FRAME = "LinkLayerMaximumBufferedFrame";
 const std::string Configuration::LINK_LAYER_TIMEOUT = "LinkLayerTimeout";
 
-const std::string Configuration::PHYSICAL_LAYER_RECEIVING_BUFFER_SIZE = "PhysicalLayerReceivingBufferSize";
-const std::string Configuration::PHYSICAL_LAYER_SENDING_BUFFER_SIZE = "PhysicalLayerSendingBufferSize";
-const std::string Configuration::PHYSICAL_LAYER_DATA_ENCODER_DECODER = "PhysicalLayerDataEncoderDecoder";
+const std::string Configuration::LINK_LAYER_LOW_RECEIVING_BUFFER_SIZE = "LinkLayerLowReceivingBufferSize";
+const std::string Configuration::LINK_LAYER_LOW_SENDING_BUFFER_SIZE = "LinkLayerLowSendingBufferSize";
+const std::string Configuration::LINK_LAYER_LOW_DATA_ENCODER_DECODER = "LinkLayerLowDataEncoderDecoder";
 
 const std::string Configuration::TRANSMISSION_HUB_BUFFER_SIZE = "TransmissionHubBufferSize";
 const std::string Configuration::TRANSMISSION_HUB_NOISE = "TransmissionHubNoise";
@@ -64,9 +63,9 @@ void Configuration::init()
     m_configs[Configuration::LINK_LAYER_MAXIMUM_BUFFERED_FRAME] = Configuration::LINK_LAYER_MAXIMUM_BUFFERED_FRAME_DEFAULT_VALUE;
     m_configs[Configuration::LINK_LAYER_TIMEOUT] = Configuration::LINK_LAYER_TIMEOUT_DEFAULT_VALUE;
 
-    m_configs[Configuration::PHYSICAL_LAYER_RECEIVING_BUFFER_SIZE] = Configuration::PHYSICAL_LAYER_RECEIVING_BUFFER_SIZE_DEFAULT_VALUE;
-    m_configs[Configuration::PHYSICAL_LAYER_SENDING_BUFFER_SIZE] = Configuration::PHYSICAL_LAYER_SENDING_BUFFER_SIZE_DEFAULT_VALUE;
-    m_configs[Configuration::PHYSICAL_LAYER_DATA_ENCODER_DECODER] = Configuration::PHYSICAL_LAYER_DATA_ENCODER_DECODER_DEFAULT_VALUE;
+    m_configs[Configuration::LINK_LAYER_LOW_RECEIVING_BUFFER_SIZE] = Configuration::LINK_LAYER_LOW_RECEIVING_BUFFER_SIZE_DEFAULT_VALUE;
+    m_configs[Configuration::LINK_LAYER_LOW_SENDING_BUFFER_SIZE] = Configuration::LINK_LAYER_LOW_SENDING_BUFFER_SIZE_DEFAULT_VALUE;
+    m_configs[Configuration::LINK_LAYER_LOW_DATA_ENCODER_DECODER] = Configuration::LINK_LAYER_LOW_DATA_ENCODER_DECODER_DEFAULT_VALUE;
 
     m_configs[Configuration::TRANSMISSION_HUB_BUFFER_SIZE] = Configuration::TRANSMISSION_HUB_BUFFER_SIZE_DEFAULT_VALUE;
     m_configs[Configuration::TRANSMISSION_HUB_NOISE] = Configuration::TRANSMISSION_HUB_NOISE_DEFAULT_VALUE;

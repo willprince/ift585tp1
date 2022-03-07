@@ -5,13 +5,13 @@
 
 
 NetworkDriver::NetworkDriver(NetworkInterfaceCard* hardware, const Configuration& config)
-    : m_physicalLayer(std::make_unique<PhysicalLayer>(this, config))
+    : m_linkLayerLow(std::make_unique<LinkLayerLow>(this, config))
     , m_linkLayer(std::make_unique<LinkLayer>(this, config))
     , m_networkLayer(std::make_unique<NetworkLayer>(this, config))
     , m_hardware(hardware)
 {
     m_networkLayer->start();
-    m_physicalLayer->start();
+    m_linkLayerLow->start();
     m_linkLayer->start();
 }
 
@@ -19,13 +19,13 @@ NetworkDriver::~NetworkDriver()
 {
     m_networkLayer->stop();
     m_linkLayer->stop();
-    m_physicalLayer->stop();
+    m_linkLayerLow->stop();
     m_hardware = nullptr;
 }
 
-PhysicalLayer& NetworkDriver::getPhysicalLayer()
+LinkLayerLow& NetworkDriver::getLinkLayerLow()
 {
-    return *m_physicalLayer;
+    return *m_linkLayerLow;
 }
 
 LinkLayer& NetworkDriver::getLinkLayer()
@@ -53,7 +53,7 @@ void NetworkDriver::sendToCard(DynamicDataBuffer& data)
 
 void NetworkDriver::receiveFromCard(const DynamicDataBuffer& data)
 {
-    m_physicalLayer->receiveData(data);
+    m_linkLayerLow->receiveData(data);
 }
 
 void NetworkDriver::start_sending_process(const MACAddress& to, const std::string& fileName)

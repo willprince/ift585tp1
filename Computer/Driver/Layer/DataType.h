@@ -32,7 +32,7 @@ struct Frame
     MACAddress Destination; // 6 octets
     MACAddress Source; // 6 octets
     NumberSequence Ack; // 2 octets
-    NumberSequence NumberSequence; // 2 octets
+    NumberSequence NumberSeq; // 2 octets
     uint32_t Size; // 4 octets
     DynamicDataBuffer Data; // 4 + X octets. Les 4 premiers octets indique la valeur de X
 };

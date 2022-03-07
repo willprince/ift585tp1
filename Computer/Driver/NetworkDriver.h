@@ -1,7 +1,7 @@
 #ifndef _COMPUTER_DRIVER_NETWORK_DRIVER_H_
 #define _COMPUTER_DRIVER_NETWORK_DRIVER_H_
 
-#include "Layer/PhysicalLayer.h"
+#include "Layer/LinkLayerLow.h"
 #include "Layer/LinkLayer.h"
 #include "Layer/NetworkLayer.h"
 
@@ -14,7 +14,7 @@ class NetworkInterfaceCard;
 class NetworkDriver
 {
     NetworkInterfaceCard* m_hardware;
-    std::unique_ptr<PhysicalLayer> m_physicalLayer;
+    std::unique_ptr<LinkLayerLow> m_linkLayerLow;
     std::unique_ptr<LinkLayer> m_linkLayer;
     std::unique_ptr<NetworkLayer> m_networkLayer;
 
@@ -22,7 +22,7 @@ public:
     NetworkDriver(NetworkInterfaceCard* hardware, const Configuration& config);
     ~NetworkDriver();
 
-    PhysicalLayer& getPhysicalLayer();
+    LinkLayerLow& getLinkLayerLow();
     LinkLayer& getLinkLayer();
     NetworkLayer& getNetworkLayer();
 

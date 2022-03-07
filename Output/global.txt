@@ -1,1 +1,0 @@
-TransmissionHubNoise=0

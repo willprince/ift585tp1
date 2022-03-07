@@ -21,6 +21,9 @@ public:
     DynamicDataBuffer& operator=(DynamicDataBuffer&& other);
     DynamicDataBuffer& operator=(const DynamicDataBuffer& other);
 
+    bool operator==(const DynamicDataBuffer& other) const;
+    bool operator!=(const DynamicDataBuffer& other) const;
+
     template<typename T>
     uint32_t write(const T& data)
     {

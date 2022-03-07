@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{1230BF3B-CD5F-426F-A54A-9970FD3DD00B}</ProjectGuid>
     <RootNamespace>Simulateur</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -41,7 +41,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -136,7 +136,7 @@
   <ItemGroup>
     <ClCompile Include="Computer\Driver\Layer\LinkLayer.cpp" />
     <ClCompile Include="Computer\Driver\Layer\NetworkLayer.cpp" />
-    <ClCompile Include="Computer\Driver\Layer\PhysicalLayer.cpp" />
+    <ClCompile Include="Computer\Driver\Layer\LinkLayerLow.cpp" />
     <ClCompile Include="Computer\Driver\NetworkDriver.cpp" />
     <ClCompile Include="DataStructures\CircularQueue.cpp" />
     <ClCompile Include="General\Configuration.cpp" />
@@ -154,7 +154,7 @@
     <ClInclude Include="Computer\Driver\Layer\DataType.h" />
     <ClInclude Include="Computer\Driver\Layer\LinkLayer.h" />
     <ClInclude Include="Computer\Driver\Layer\NetworkLayer.h" />
-    <ClInclude Include="Computer\Driver\Layer\PhysicalLayer.h" />
+    <ClInclude Include="Computer\Driver\Layer\LinkLayerLow.h" />
     <ClInclude Include="Computer\Driver\NetworkDriver.h" />
     <ClInclude Include="DataStructures\CircularQueue.h" />
     <ClInclude Include="General\Configuration.h" />
@@ -171,10 +171,6 @@
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="IFT585.natvis" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="CMakeLists.txt" />
-    <Text Include="Output\Computer1.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

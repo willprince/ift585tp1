@@ -1,6 +1,0 @@
-MacAddressByte1=0xDE
-MacAddressByte2=0xAD
-MacAddressByte3=0xBE
-MacAddressByte4=0xEF
-MacAddressByte5=0x00
-MacAddressByte6=0x01

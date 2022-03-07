@@ -27,7 +27,7 @@
     <ClCompile Include="Computer\Driver\NetworkDriver.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="Computer\Driver\Layer\PhysicalLayer.cpp">
+    <ClCompile Include="Computer\Driver\Layer\LinkLayerLow.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="Computer\Driver\Layer\LinkLayer.cpp">
@@ -71,7 +71,7 @@
     <ClInclude Include="Computer\Driver\NetworkDriver.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="Computer\Driver\Layer\PhysicalLayer.h">
+    <ClInclude Include="Computer\Driver\Layer\LinkLayerLow.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="Computer\Driver\Layer\LinkLayer.h">
@@ -116,9 +116,5 @@
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="IFT585.natvis" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="CMakeLists.txt" />
-    <Text Include="Output\Computer1.txt" />
   </ItemGroup>
 </Project>

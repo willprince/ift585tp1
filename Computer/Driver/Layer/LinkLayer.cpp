@@ -5,6 +5,7 @@
 #include "../../../General/Logger.h"
 
 #include <iostream>
+#include <functional>
 #include <map>
 
 
@@ -99,26 +100,20 @@ bool LinkLayer::sendFrame(const Frame& frame)
     {
         if (canSendData(frame))
         {
-            Logger log(std::cout);
-
-            if (frame.Size == FrameType::NAK)
-            {
-                log << "SENDER  :" << frame.Source << " : Sending NAK  to " << frame.Destination << " : " << frame.Ack << std::endl;
-				m_sendingQueue.push(frame);
-            }
-            else if (frame.Size == FrameType::ACK)
-            {
-                log << "SENDER  :" << frame.Source << " : Sending ACK  to " << frame.Destination << " : " << frame.Ack << std::endl;
-				m_sendingQueue.push(frame);
-				startAckTimer(-1, frame.Ack);
-            }
-            else
-            {
-                log << "SENDER  :" << frame.Source << " : Sending DATA to " << frame.Destination << " : " << frame.NumberSequence << std::endl;
-				m_sendingQueue.push(frame);
-				startTimeoutTimer(frame.NumberSequence);
-            }
-            
+            //Logger log(std::cout);
+            //if (frame.Size == FrameType::NAK)
+            //{
+            //    log << frame.Source << " : Sending NAK  to " << frame.Destination << " : " << frame.Ack << std::endl;
+            //}
+            //else if (frame.Size == FrameType::ACK)
+            //{
+            //    log << frame.Source << " : Sending ACK  to " << frame.Destination << " : " << frame.Ack << std::endl;
+            //}
+            //else
+            //{
+            //    log << frame.Source << " : Sending DATA to " << frame.Destination << " : " << frame.NumberSeq << std::endl;
+            //}
+            m_sendingQueue.push(frame);
             return true;
         }
     }
@@ -282,7 +277,7 @@ void LinkLayer::receiveData(Frame data)
     {
         // Est-ce que la trame reçue est pour nous?
         if (data.Destination == m_address || data.Destination.isMulticast())
-        {			
+        {
             m_receivingQueue.push(data);
         }
     }
@@ -299,188 +294,40 @@ MACAddress LinkLayer::arp(const Packet& packet) const
 // Fonction qui fait l'envoi des trames et qui gere la fenetre d'envoi
 void LinkLayer::senderCallback()
 {
-	int NR_BUFS = (m_maximumSequence + 1) / 2;
-	NumberSequence ack_expected = 0;
-	NumberSequence next_frame_to_send = 0;
-	Frame* out_buf = new Frame[NR_BUFS];
-	NumberSequence nbuffered = 0;
-	bool no_nak = true;
-
+    // Passtrough
+    NumberSequence nextID = 0;
     while (m_executeSending)
     {
-		Logger log(std::cout);
-		// Check if there is an event
-		Event next_sending_event = getNextSendingEvent();
-		if (next_sending_event.Type == EventType::SEND_ACK_REQUEST) {
-			
-			Frame frame;
-			frame.Destination = next_sending_event.Address;
-			frame.Source = m_address;
-			frame.NumberSequence = next_sending_event.Number;
-			frame.Ack = next_sending_event.Number;
-			frame.Size = FrameType::ACK;
+        // Est-ce qu'on doit envoyer des donnees
+        if (m_driver->getNetworkLayer().dataReady())
+        {
+            Packet packet = m_driver->getNetworkLayer().getNextData();
+            Frame frame;
+            frame.Destination = arp(packet);
+            frame.Source = m_address;
+            frame.NumberSeq = nextID++;
+            frame.Data = Buffering::pack<Packet>(packet);
+            frame.Size = (uint16_t)frame.Data.size();
 
-			sendFrame(frame);
-			
-		}
-
-		if (next_sending_event.Type == EventType::ACK_RECEIVED) {
-
-			log << "ACK RECEIVED: " << next_sending_event.Number << std::endl;
-			
-			while (between(next_sending_event.Number, ack_expected, next_frame_to_send)) {
-				nbuffered--;
-				stopAckTimer(next_sending_event.TimerID);
-				ack_expected++;
-				log << "ARGG " << ack_expected << std::endl;
-			}
-			
-		}
-
-		if (next_sending_event.Type == EventType::SEND_TIMEOUT) {
-
-			log << "SEND TIMEOUT: " << next_sending_event.Number << std::endl;
-			
-			int n = 0;
-
-			log << "SENDING AGAIN: " << out_buf[n].NumberSequence << std::endl;
-
-			while(n < NR_BUFS){
-				
-				if (next_sending_event.Number == out_buf[n].NumberSequence) {
-
-					sendFrame(out_buf[n]);
-				}
-				n++;
-			}
-
-		}
-
-		
-
-		// S'il n'y a pas d'event
-		if (next_sending_event.Type == EventType::INVALID) {
-
-			// On valid si l'on peux envoyé une nouvelle trame
-			if (nbuffered < NR_BUFS) {
-
-				// On envoie une trame
-				if (m_driver->getNetworkLayer().dataReady())
-				{
-
-					Packet packet = m_driver->getNetworkLayer().getNextData();
-					
-
-					for (int i = 0; i < NR_BUFS - 1; i++) {
-						out_buf[i] = out_buf[i + 1];
-					}
-
-					
-					
-					Frame frame;
-					frame.Destination = arp(packet);
-					frame.Source = m_address;
-					frame.NumberSequence = next_frame_to_send;
-					frame.Data = Buffering::pack<Packet>(packet);
-					frame.Size = (uint16_t)frame.Data.size();
-
-					out_buf[NR_BUFS - 1] = frame;
-
-					nbuffered++;
-					next_frame_to_send++;
-
-					// On envoit la trame. Si la trame n'est pas envoye, c'est qu'on veut arreter le simulateur
-					if (!sendFrame(frame))
-					{
-						return;
-					}
-				}
-			}
-			
-		} 
+            // On envoit la trame. Si la trame n'est pas envoye, c'est qu'on veut arreter le simulateur
+            if (!sendFrame(frame))
+            {
+                return;
+            }
+        }
     }
 }
 
 // Fonction qui s'occupe de la reception des trames
 void LinkLayer::receiverCallback()
 {
-	const int NR_BUFS = (m_maximumSequence + 1) / 2;
-	NumberSequence frame_expected = 0;
-	NumberSequence too_far = NR_BUFS;
-	NumberSequence* in_buf = new NumberSequence[NR_BUFS];
-	bool* arrived = new bool[NR_BUFS];
-	bool no_nak = true;
-
-	for (int i = 0; i < NR_BUFS; i++) { arrived[i] = false; }
-
     // Passtrough
     while (m_executeReceiving)
     {        
-		Logger log(std::cout);
-		// Check if there is an event
-		Event next_receiving_event = getNextSendingEvent();
-
-		if (next_receiving_event.Type == EventType::SEND_TIMEOUT) {
-			log << "RECEIVER TIMEOUT: " << next_receiving_event.Number << std::endl;
-			Frame frame;
-			frame.Destination = next_receiving_event.Address;
-			frame.Source = m_address;
-			frame.NumberSequence = next_receiving_event.Number;
-			frame.Ack = next_receiving_event.Number;
-			frame.Size = FrameType::ACK;
-			notifyACK(frame, frame.Ack);
-
-		}
-
-		// S'il n'y a pas d'event
-		if (next_receiving_event.Type == EventType::INVALID) {
-			if (m_receivingQueue.canRead<Frame>())
-			{
-				Frame frame = m_receivingQueue.pop<Frame>();
-
-				if (frame.Size == FrameType::NAK)
-				{
-					log << "RECEIVER: " << frame.Destination << " : received a NAK  from " << frame.Source << " : " << frame.Ack << std::endl;
-				}
-				else if (frame.Size == FrameType::ACK)
-				{
-					log << "RECEIVER: " << frame.Destination << " : received a ACK  from " << frame.Source << " : " << frame.Ack << std::endl;
-					notifyACK(frame, frame.Ack);
-					startAckTimer(-1, frame.Ack);
-				}
-				else
-				{
-					log << "RECEIVER: " << frame.Destination << " : received DATA from " << frame.Source << " : " << frame.NumberSequence << std::endl;
-					if ((frame.NumberSequence != frame_expected) && no_nak) {
-
-						log << "unexpected frame receive: " << frame.NumberSequence << " sending NAK" << std::endl;
-						sendNak(frame.Source, frame.NumberSequence);
-					}
-
-					if (between( frame.NumberSequence, frame_expected, too_far) && (arrived[frame.NumberSequence % NR_BUFS] == false)) {
-
-						arrived[frame.NumberSequence % NR_BUFS] = true;
-						in_buf[frame.NumberSequence % NR_BUFS] = frame.NumberSequence;
-
-						while (arrived[frame_expected % NR_BUFS]) {
-							m_driver->getNetworkLayer().receiveData(Buffering::unpack<Packet>(frame.Data));
-							no_nak = true;
-							arrived[frame_expected % NR_BUFS] = false;
-							frame_expected++;
-							too_far++;
-							sendAck(frame.Source, frame.NumberSequence);
-							startTimeoutTimer(frame.NumberSequence);
-						}
-					}
-
-					//m_driver->getNetworkLayer().receiveData(Buffering::unpack<Packet>(frame.Data));
-					//frame_expected++;;
-
-				}
-
-				/*m_driver->getNetworkLayer().receiveData(Buffering::unpack<Packet>(frame.Data));*/
-			}
-		}
-        
+        if (m_receivingQueue.canRead<Frame>())
+        {
+            Frame frame = m_receivingQueue.pop<Frame>();
+            m_driver->getNetworkLayer().receiveData(Buffering::unpack<Packet>(frame.Data));
+        }
     }
 }

@@ -42,6 +42,27 @@ DynamicDataBuffer::~DynamicDataBuffer()
     delete[] m_data;
 }
 
+bool DynamicDataBuffer::operator==(const DynamicDataBuffer& other) const
+{
+    if (m_size == other.size())
+    {
+        for (size_t i = 0; i < m_size; ++i)
+        {
+            if (m_data[i] != other[i])
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+bool DynamicDataBuffer::operator!=(const DynamicDataBuffer& other) const
+{
+    return !(*this == other);
+}
+
 DynamicDataBuffer& DynamicDataBuffer::operator=(DynamicDataBuffer&& other)
 {
     // On évite l'autoassignement

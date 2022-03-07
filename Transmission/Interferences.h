@@ -1,6 +1,7 @@
 #ifndef _TRANSMISSION_INTERFERENCES_H_
 #define _TRANSMISSION_INTERFERENCES_H_
 
+#include <memory>
 #include <random>
 
 class Configuration;

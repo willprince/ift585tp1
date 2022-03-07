@@ -27,12 +27,12 @@ public:
     static const int LINK_LAYER_MAXIMUM_BUFFERED_FRAME_DEFAULT_VALUE = 4;
     static const int LINK_LAYER_TIMEOUT_DEFAULT_VALUE = 1000; // En millisecondes
 
-    static const std::string PHYSICAL_LAYER_RECEIVING_BUFFER_SIZE;
-    static const std::string PHYSICAL_LAYER_SENDING_BUFFER_SIZE;
-    static const std::string PHYSICAL_LAYER_DATA_ENCODER_DECODER;
-    static const int PHYSICAL_LAYER_RECEIVING_BUFFER_SIZE_DEFAULT_VALUE = 500000;
-    static const int PHYSICAL_LAYER_SENDING_BUFFER_SIZE_DEFAULT_VALUE = 500000;
-    static const int PHYSICAL_LAYER_DATA_ENCODER_DECODER_DEFAULT_VALUE = 0;
+    static const std::string LINK_LAYER_LOW_RECEIVING_BUFFER_SIZE;
+    static const std::string LINK_LAYER_LOW_SENDING_BUFFER_SIZE;
+    static const std::string LINK_LAYER_LOW_DATA_ENCODER_DECODER;
+    static const int LINK_LAYER_LOW_RECEIVING_BUFFER_SIZE_DEFAULT_VALUE = 500000;
+    static const int LINK_LAYER_LOW_SENDING_BUFFER_SIZE_DEFAULT_VALUE = 500000;
+    static const int LINK_LAYER_LOW_DATA_ENCODER_DECODER_DEFAULT_VALUE = 0;
 
     static const std::string TRANSMISSION_HUB_BUFFER_SIZE;
     static const std::string TRANSMISSION_HUB_NOISE;
